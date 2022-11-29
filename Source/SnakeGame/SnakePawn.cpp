@@ -19,7 +19,6 @@ void ASnakePawn::BeginPlay()
 	Super::BeginPlay();
 	
 	_tilemap = static_cast<ASnakeGameLogic*>(UGameplayStatics::GetGameMode(GetWorld()))->GetTilemap(); // get the tilemap
-	_speed /= _tilemap->GetTileSize(); // divide to convert to tiles per second
 }
 
 // Called every frame
@@ -27,13 +26,13 @@ void ASnakePawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	_position += FVector2D(_direction) * _speed;
+	_position += FVector2D(_direction) * _speed * DeltaTime;
 
-	int32 x = (int32)_position.X; // floor x and y
-	int32 y = (int32)_position.Y;
+	const int32 x = (int32)_position.X; // floor x and y
+	const int32 y = (int32)_position.Y;
 
 	if (x != _oldPos.X || y != _oldPos.Y)
-		NewTileReached();
+		NewTileReached(x, y);
 
 	_oldPos.X = x;
 	_oldPos.Y = y;
@@ -50,7 +49,7 @@ void ASnakePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 	PlayerInputComponent->BindAction("MoveUp", IE_Pressed, this, &ASnakePawn::MoveUp);
 }
 
-void ASnakePawn::NewTileReached()
+void ASnakePawn::NewTileReached(const int32 x, const int32 y)
 {
 	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, TEXT("Test"));
 }

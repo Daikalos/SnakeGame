@@ -34,7 +34,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
-	void NewTileReached();
+	void NewTileReached(const int32 x, const int32 y);
 
 	void MoveLeft();
 	void MoveRight();
