@@ -1,7 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Tilemap.h"
+
 #include "ProceduralMeshComponent.h"
+#include "SnakeGameLogic.h"
 
 // Sets default values
 ATilemap::ATilemap() : _tiles(std::make_unique<TileType[]>(_width * _height))
@@ -18,6 +20,8 @@ void ATilemap::BeginPlay()
 {
 	Super::BeginPlay();
 
+	static_cast<ASnakeGameLogic*>(UGameplayStatics::GetGameMode(GetWorld()))->SetTilemap(this);
+
 	for (int32 y = 0; y < _height; ++y)
 		for (int32 x = 0; x < _width; ++x)
 		{
@@ -25,9 +29,17 @@ void ATilemap::BeginPlay()
 		}
 }
 
-bool ATilemap::WithinMap(const int32 x, const int32 y) const
+constexpr uint16 ATilemap::GetWidth() const noexcept
 {
-	return !(x < 0 || y < 0 || x >= _width || y >= _height);
+	return _width;
+}
+constexpr uint16 ATilemap::GetHeight() const noexcept
+{
+	return _height;
+}
+constexpr uint16 ATilemap::GetTileSize() const noexcept
+{
+	return _tileSize;
 }
 
 TileType ATilemap::GetTile(const int32 x, const int32 y) const
@@ -45,6 +57,16 @@ bool ATilemap::SetTile(const int32 x, const int32 y, const TileType tile_type)
 	_tiles[IX(x, y)] = tile_type;
 
 	return true;
+}
+
+bool ATilemap::WithinMap(const int32 x, const int32 y) const
+{
+	return !(x < 0 || y < 0 || x >= _width || y >= _height);
+}
+
+constexpr int32 ATilemap::IX(const int32 x, const int32 y) const noexcept
+{
+	return x + y * _width;
 }
 
 void ATilemap::UpdateTileTexture(const int32 x, const int32 y, const TileType tile_type)
@@ -72,10 +94,5 @@ void ATilemap::UpdateTileTexture(const int32 x, const int32 y, const TileType ti
 		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, TEXT("Unknown tile type"));
 		break;
 	}
-}
-
-constexpr int32 ATilemap::IX(const int32 x, const int32 y) const noexcept
-{
-	return x + y * _width;
 }
 

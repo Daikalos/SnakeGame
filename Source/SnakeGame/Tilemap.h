@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <Kismet/GameplayStatics.h>
+
 #include <memory>
 
 #include "CoreMinimal.h"
@@ -34,22 +36,28 @@ public:
 
 protected:
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	void BeginPlay() override;
 
 public:
-	bool WithinMap(const int32 x, const int32 y) const;
+	[[nodiscard]] constexpr uint16 GetWidth() const noexcept;
+	[[nodiscard]] constexpr uint16 GetHeight() const noexcept;
+	[[nodiscard]] constexpr uint16 GetTileSize() const noexcept;
 
-	TileType GetTile(const int32 x, const int32 y) const;
+	[[nodiscard]] TileType GetTile(const int32 x, const int32 y) const;
 	bool SetTile(const int32 x, const int32 y, const TileType tile_type);
 
+	// returns true if the given coordinates is within the borders of the tilemap
+	//
+	[[nodiscard]] bool WithinMap(const int32 x, const int32 y) const;
+
 private:
+	// Converts 2D coordinate to index in array
+//
+	[[nodiscard]] constexpr int32 IX(const int32 x, const int32 y) const noexcept;
+
 	// Updates the texture for a tile dependant on the passed tile type
 	//
 	void UpdateTileTexture(const int32 x, const int32 y, const TileType tile_type);
-
-	// Converts 2D coordinate to index in array
-	//
-	constexpr int32 IX(const int32 x, const int32 y) const noexcept;
 
 public:
 	UPROPERTY(EditAnywhere)

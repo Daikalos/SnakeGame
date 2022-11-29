@@ -3,6 +3,8 @@
 
 #include "SnakePawn.h"
 
+#include "SnakeGameLogic.h"
+
 // Sets default values
 ASnakePawn::ASnakePawn()
 {
@@ -16,6 +18,8 @@ void ASnakePawn::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	_tilemap = static_cast<ASnakeGameLogic*>(UGameplayStatics::GetGameMode(GetWorld()))->GetTilemap(); // get the tilemap
+	_speed /= _tilemap->GetTileSize(); // divide to convert to tiles per second
 }
 
 // Called every frame
@@ -24,6 +28,15 @@ void ASnakePawn::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	_position += FVector2D(_direction) * _speed;
+
+	int32 x = (int32)_position.X; // floor x and y
+	int32 y = (int32)_position.Y;
+
+	if (x != _oldPos.X || y != _oldPos.Y)
+		NewTileReached();
+
+	_oldPos.X = x;
+	_oldPos.Y = y;
 }
 
 // Called to bind functionality to input
@@ -35,6 +48,11 @@ void ASnakePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 	PlayerInputComponent->BindAction("MoveRight", IE_Pressed, this, &ASnakePawn::MoveRight);
 	PlayerInputComponent->BindAction("MoveDown", IE_Pressed, this, &ASnakePawn::MoveDown);
 	PlayerInputComponent->BindAction("MoveUp", IE_Pressed, this, &ASnakePawn::MoveUp);
+}
+
+void ASnakePawn::NewTileReached()
+{
+	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, TEXT("Test"));
 }
 
 void ASnakePawn::MoveLeft()

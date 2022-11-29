@@ -2,7 +2,10 @@
 
 #pragma once
 
+#include <Kismet/GameplayStatics.h>
+
 #include <vector>
+#include <cmath>
 
 #include "Tilemap.h"
 
@@ -31,6 +34,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
+	void NewTileReached();
+
 	void MoveLeft();
 	void MoveRight();
 	void MoveDown();
@@ -50,9 +55,8 @@ public:
 	FIntPoint	_direction	{1, 0};
 	
 private:
-	std::vector<FIntPoint> _body; // begins with head and ends with tail
+	FIntPoint				_oldPos;	// old position to compare if new tile is reached
+	std::vector<FIntPoint>	_body;		// begins with head and ends with tail
 
-	ATilemap*				_tileMap{nullptr};
-
-	friend class ASnakeController;
+	ATilemap*				_tilemap{nullptr}; // reference to tilemap
 };
