@@ -17,60 +17,109 @@ enum class TileType : uint8
 	Food		UMETA(DisplayName = "Food"),
 	SnakeBody	UMETA(DisplayName = "SnakeBody"),
 	SnakeHead	UMETA(DisplayName = "SnakeHead"),
-	SnakeTail	UMETA(DisplayName = "SnakeTail")
+	SnakeTail	UMETA(DisplayName = "SnakeTail"),
+
+	Count // keep this at end
 };
 
 class UProceduralMeshComponent;
+class UMaterialInterface;
+class ATilemap;
+
+// match tiletype to specific color
+//
+static const FLinearColor TileColor[] =
+{
+	FLinearColor(0.5f, 1.0f, 0.5f), // Empty
+	FLinearColor(1.0f, 0.0f, 0.0f), // Food
+	FLinearColor(0.1f, 0.4f, 0.1f), // Body
+	FLinearColor(0.3f, 0.6f, 0.3f), // Head
+	FLinearColor(0.0f, 0.4f, 0.0f)  // Tail
+};
+
+class Tile
+{
+public:
+	Tile() = default;
+	Tile(TileType tileType, const FIntPoint& position, int32 index, int32 tileSize);
+
+	bool operator==(const TileType& rhs) const;
+	bool operator!=(const TileType& rhs) const;
+
+public:
+	const TileType& GetType() const noexcept;
+
+public:
+	// Sets the type and updates the color for a tile dependant on the passed tile type
+	//
+	void SetType(TileType tileType);
+
+	void BuildMesh(UProceduralMeshComponent* const mesh, UMaterialInterface* const mtl);
+	void UpdateMesh(UProceduralMeshComponent* const mesh);
+
+private:
+	TileType				_tileType	{TileType::Empty};
+	FIntPoint				_position;
+	int32					_index		{0};
+	int32					_tileSize	{0};
+
+	TArray<FVector>			_vertices;
+	TArray<int32>			_triangles;
+	TArray<FLinearColor>	_color;
+
+	friend ATilemap;
+};
 
 UCLASS()
 class SNAKEGAME_API ATilemap : public AActor
 {
 	GENERATED_BODY()
 
-public:
-	using TilePtr = std::unique_ptr<TileType[]>;
+private:
+	using TileArrayPtr = std::unique_ptr<Tile[]>;
 	
 public:	
 	// Sets default values for this actor's properties
 	ATilemap();
 
-protected:
-	// Called when the game starts or when spawned
-	void BeginPlay() override;
+public:
+	void Initialize();
 
 public:
 	[[nodiscard]] constexpr uint16 GetWidth() const noexcept;
 	[[nodiscard]] constexpr uint16 GetHeight() const noexcept;
-	[[nodiscard]] constexpr uint16 GetTileSize() const noexcept;
 
-	[[nodiscard]] TileType GetTile(const int32 x, const int32 y) const;
+	[[nodiscard]] const Tile& GetTile(const int32 x, const int32 y) const;
 	bool SetTile(const int32 x, const int32 y, const TileType tile_type);
+
+	[[nodiscard]] const Tile& GetTile(const FIntPoint& point) const;
+	bool SetTile(const FIntPoint& point, const TileType tile_type);
 
 	// returns true if the given coordinates is within the borders of the tilemap
 	//
 	[[nodiscard]] bool WithinMap(const int32 x, const int32 y) const;
+	[[nodiscard]] bool WithinMap(const FIntPoint& point) const;
 
 private:
 	// Converts 2D coordinate to index in array
-//
-	[[nodiscard]] constexpr int32 IX(const int32 x, const int32 y) const noexcept;
-
-	// Updates the texture for a tile dependant on the passed tile type
 	//
-	void UpdateTileTexture(const int32 x, const int32 y, const TileType tile_type);
+	[[nodiscard]] constexpr int32 IX(const int32 x, const int32 y) const noexcept;
 
 public:
 	UPROPERTY(EditAnywhere)
-	uint16	_width		{12};	// number of tiles in width
+	int32	_width		{16};	// number of tiles in width
 
 	UPROPERTY(EditAnywhere)
-	uint16	_height		{9};	// number of tiles in height
+	int32	_height		{10};	// number of tiles in height
 
 	UPROPERTY(EditAnywhere)
-	uint16	_tileSize	{128};	// size of each tile in the grid
+	int32	_tileSize	{128};	// size of each tile in the grid
+
+	UPROPERTY(EditAnywhere)
+	UMaterialInterface* _material {nullptr};
 
 private:
-	TilePtr _tiles;
+	TileArrayPtr _tiles;
 
-	UProceduralMeshComponent* _mesh {nullptr}; // mesh of the grid
+	UProceduralMeshComponent*	_mesh		{nullptr}; // mesh of the grid
 };

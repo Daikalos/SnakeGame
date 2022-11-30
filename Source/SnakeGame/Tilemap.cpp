@@ -5,27 +5,93 @@
 #include "ProceduralMeshComponent.h"
 #include "SnakeGameLogic.h"
 
-// Sets default values
-ATilemap::ATilemap() : _tiles(std::make_unique<TileType[]>(_width * _height))
-{
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+// -- tile --
 
-	_mesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("ProceduralMesh"));
-	_mesh->SetupAttachment(GetRootComponent());
+Tile::Tile(TileType tileType, const FIntPoint& position, int32 index, int32 tileSize)
+	: _tileType(), _position(position), _index(index), _tileSize(tileSize)
+{
+	SetType(tileType);
+
+	_vertices.Add(FVector(	 position.X * tileSize,			 position.Y * tileSize,			0));
+	_vertices.Add(FVector(	 position.X * tileSize,			(position.Y + 1) * tileSize,	0));
+	_vertices.Add(FVector(	(position.X + 1) * tileSize,	 position.Y * tileSize,			0));
+	_vertices.Add(FVector(	(position.X + 1) * tileSize,	(position.Y + 1) * tileSize,	0));
+
+	_triangles.Add(0);
+	_triangles.Add(1);
+	_triangles.Add(2);
+	_triangles.Add(1);
+	_triangles.Add(3);
+	_triangles.Add(2);
 }
 
-// Called when the game starts or when spawned
-void ATilemap::BeginPlay()
+bool Tile::operator==(const TileType& rhs) const
 {
-	Super::BeginPlay();
+	return _tileType == rhs;
+}
+bool Tile::operator!=(const TileType& rhs) const
+{
+	return !(*this == rhs);
+}
 
-	static_cast<ASnakeGameLogic*>(UGameplayStatics::GetGameMode(GetWorld()))->SetTilemap(this);
+const TileType& Tile::GetType() const noexcept
+{
+	return _tileType;
+}
 
+void Tile::SetType(TileType tileType)
+{
+	_tileType = tileType;
+
+	int32 typeIndex = (int32)_tileType;
+	const FLinearColor& color = TileColor[typeIndex];
+
+	if (_color.Num())
+	{
+		_color[0] = color;
+		_color[1] = color;
+		_color[2] = color;
+		_color[3] = color;
+	}
+	else
+	{
+		_color.Add(color);
+		_color.Add(color);
+		_color.Add(color);
+		_color.Add(color);
+	}
+}
+
+void Tile::BuildMesh(UProceduralMeshComponent* const mesh, UMaterialInterface* const mtl)
+{
+	mesh->CreateMeshSection_LinearColor(_index, _vertices, _triangles, TArray<FVector>(), TArray<FVector2D>(), _color, TArray<FProcMeshTangent>(), false);
+	mesh->SetMaterial(_index, mtl);
+}
+
+void Tile::UpdateMesh(UProceduralMeshComponent* const mesh)
+{
+	mesh->UpdateMeshSection_LinearColor(_index, _vertices, TArray<FVector>(), TArray<FVector2D>(), _color, TArray<FProcMeshTangent>());
+}
+
+// -- tilemap --
+
+ATilemap::ATilemap() : _tiles(std::make_unique<Tile[]>(_width * _height))
+{
+	PrimaryActorTick.bCanEverTick = false;
+
+	_mesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("ProceduralMesh"));
+	_mesh->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+}
+
+void ATilemap::Initialize()
+{
 	for (int32 y = 0; y < _height; ++y)
 		for (int32 x = 0; x < _width; ++x)
 		{
-			//_mesh->CreateMeshSection(0,)
+			int32 i = IX(x, y);
+
+			Tile& tile = (_tiles[i] = Tile(TileType::Empty, { x, y }, i, _tileSize));
+			tile.BuildMesh(_mesh, _material);
 		}
 }
 
@@ -37,16 +103,9 @@ constexpr uint16 ATilemap::GetHeight() const noexcept
 {
 	return _height;
 }
-constexpr uint16 ATilemap::GetTileSize() const noexcept
-{
-	return _tileSize;
-}
 
-TileType ATilemap::GetTile(const int32 x, const int32 y) const
+const Tile& ATilemap::GetTile(const int32 x, const int32 y) const
 {
-	if (!WithinMap(x, y))
-		return TileType::Empty;
-
 	return _tiles[IX(x, y)];
 }
 bool ATilemap::SetTile(const int32 x, const int32 y, const TileType tile_type)
@@ -54,45 +113,34 @@ bool ATilemap::SetTile(const int32 x, const int32 y, const TileType tile_type)
 	if (!WithinMap(x, y))
 		return false;
 
-	_tiles[IX(x, y)] = tile_type;
+	Tile& tile = _tiles[IX(x, y)];
+
+	tile.SetType(tile_type);
+	tile.UpdateMesh(_mesh);
 
 	return true;
+}
+
+const Tile& ATilemap::GetTile(const FIntPoint& point) const
+{
+	return GetTile(point.X, point.Y);
+}
+bool ATilemap::SetTile(const FIntPoint& point, const TileType tile_type)
+{
+	return SetTile(point.X, point.Y, tile_type);
 }
 
 bool ATilemap::WithinMap(const int32 x, const int32 y) const
 {
 	return !(x < 0 || y < 0 || x >= _width || y >= _height);
 }
+bool ATilemap::WithinMap(const FIntPoint& point) const
+{
+	return WithinMap(point.X, point.Y);
+}
 
 constexpr int32 ATilemap::IX(const int32 x, const int32 y) const noexcept
 {
 	return x + y * _width;
-}
-
-void ATilemap::UpdateTileTexture(const int32 x, const int32 y, const TileType tile_type)
-{
-	const int32 index = IX(x, y);
-
-	switch (tile_type)
-	{
-	case TileType::Empty:
-
-		break;
-	case TileType::Food:
-
-		break;
-	case TileType::SnakeBody:
-
-		break;
-	case TileType::SnakeHead:
-
-		break;
-	case TileType::SnakeTail:
-
-		break;
-	default: 
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, TEXT("Unknown tile type"));
-		break;
-	}
 }
 

@@ -13,6 +13,8 @@
 #include "GameFramework/Pawn.h"
 #include "SnakePawn.generated.h"
 
+class ASnakeGameLogic;
+
 UCLASS()
 class SNAKEGAME_API ASnakePawn : public APawn
 {
@@ -22,19 +24,19 @@ public:
 	// Sets default values for this pawn's properties
 	ASnakePawn();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+public:
+	const FIntPoint& GetPosition() const;
+	int32 BodySize() const;
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	void Initialize(ASnakeGameLogic* gameLogic, ATilemap* tilemap);
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	void Tick(float DeltaTime) override;
+
+	void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
-	void NewTileReached(const int32 x, const int32 y);
+	void Update();
 
 	void MoveLeft();
 	void MoveRight();
@@ -43,20 +45,25 @@ private:
 
 public:
 	UPROPERTY(EditAnywhere, meta = (ToolTip = "Speed at which the snake traverses tiles, e.g., speed of 1 means 1 tile per second"))
-	float		 _speed		{1.0f};
+	float		_tilesPerSecond	{1.0f};
 
 	UPROPERTY(EditAnywhere, meta = (ToolTip = "Current length of the snake"))
-	int32		_length		{6};
+	int32		_length			{5};
 
 	UPROPERTY(EditAnywhere, meta = (ToolTip = "Position of the snake"))
-	FVector2D	_position	{8, 5};
+	FIntPoint	_position		{8, 5};
 
 	UPROPERTY(EditAnywhere, meta = (ToolTip = "Current direction the snake is heading"))
-	FIntPoint	_direction	{1, 0};
+	FIntPoint	_direction		{1, 0};
 	
 private:
-	FIntPoint				_oldPos;	// old position to compare if new tile is reached
-	std::vector<FIntPoint>	_body;		// begins with head and ends with tail
+	float				_moveTimer {0.0f};
+	FIntPoint			_oldPos;	// old position to compare if new tile is reached
 
-	ATilemap*				_tilemap{nullptr}; // reference to tilemap
+	TArray<FIntPoint>	_body;		// body of the snake, used primarily to move outmost tail
+
+	ASnakeGameLogic*	_gameLogic	{nullptr};
+	ATilemap*			_tilemap	{nullptr};
+
+	friend class ASnakeGameLogic;
 };
