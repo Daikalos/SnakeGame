@@ -10,6 +10,9 @@ ASnakePawn::ASnakePawn()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	_camera = CreateDefaultSubobject<UCameraComponent>(TEXT("UCameraComponent"));
+	_camera->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 }
 
 const FIntPoint& ASnakePawn::GetPosition() const
@@ -30,24 +33,26 @@ void ASnakePawn::Initialize(ASnakeGameLogic* gameLogic, ATilemap* tilemap)
 	_moveTimer = _tilesPerSecond;
 	_tilesPerSecond /= 1.0f;
 
-	if (!_tilemap->SetTile(_position, TileType::SnakeHead))
+	_camera->SetWorldRotation(FQuat::MakeFromEuler({ 0.0f, 270.0f, -90.0f })); // set rotation and position of camera
+	_camera->SetWorldLocation(
+		{ 
+			_tilemap->GetWidth() * _tilemap->GetTileSize() / 2.0f, 
+			_tilemap->GetHeight() * _tilemap->GetTileSize() / 2.0f, 
+			_cameraZPos
+		});
+
+	_body.Reserve(_length + 1); // +1 for head
+	_body.Push(_position); // add head
+
+	_tilemap->SetTile(_position, TileType::SnakeHead);
+
+	for (int32 i = 1; i <= _length; ++i) // create body
 	{
-		if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Yellow, TEXT("Failed to set head tile"));
+		_body.Push(_position - _direction * i);
+		_tilemap->SetTile(_body.Last(), TileType::SnakeBody);
 	}
 
-	_body.Reserve(_length + 1);
-	_body.Push(_position);
-
-	for (int32 i = 0; i < _length; ++i)
-	{
-		FIntPoint position = _position + (_direction * (i + 1) * -1);
-		_body.Push(position);
-
-		_tilemap->SetTile(position, TileType::SnakeBody);
-	}
-
-	_oldPos.X = _position.X;
-	_oldPos.Y = _position.Y;
+	_oldPos = _position;
 }
 
 // Called every frame
@@ -81,26 +86,36 @@ void ASnakePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 
 void ASnakePawn::Update()
 {
-	if (_gameLogic->GameOver())
+	if (_gameLogic->IsGameOver())
 		return;
 
 	if (_tilemap->GetTile(_position) == TileType::Food)
 	{
 		_gameLogic->AddFoodEaten();
+
+		FIntPoint last = _body.Last();
+		_body.Push(last);
+	}
+	else
+	{
+		_tilemap->SetTile(_body.Last(), TileType::Empty);
 	}
 
 	_tilemap->SetTile(_position, TileType::SnakeHead);
 	_tilemap->SetTile(_oldPos, TileType::SnakeBody);
 
-	int32 l = _body.Num() - 1;
-	_tilemap->SetTile(_body[l], TileType::Empty);
-
-	for (int32 i = l; i >= 1; --i) // update body
+	for (int32 i = _body.Num() - 1; i > 0; --i) // update body
 		_body[i] = _body[i - 1];
+
+	_body[0] = _position;
+
+	_tilemap->SetTile(_oldPos, TileType::SnakeBody);
 }
 
 void ASnakePawn::MoveLeft()
 {
+	// TODO: FIX
+
 	if (_direction.X != 1) // cannot move in on itself
 		_direction = { -1, 0 };
 }

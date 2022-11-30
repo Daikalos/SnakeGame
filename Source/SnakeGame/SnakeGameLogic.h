@@ -2,14 +2,15 @@
 
 #pragma once
 
-#include "Tilemap.h"
-#include "SnakePawn.h"
-
-#include <Kismet/GameplayStatics.h>
-
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "SnakeGameLogic.generated.h"
+
+class UPlayerHUDWidget;
+class UGameOverWidget;
+
+class ATilemap;
+class ASnakePawn;
 
 /**
  * 
@@ -26,15 +27,25 @@ public:
 	int32 GetFoodEaten() const noexcept;
 	void AddFoodEaten();
 
-	bool GameOver() const;
+	bool IsGameOver();
 
 private:
 	FIntPoint GetNewFoodPoint() const;
+
+public:
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	TSubclassOf<UPlayerHUDWidget> PlayerHUDWidget = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	TSubclassOf<UGameOverWidget> GameOverWidget = nullptr;
 
 private:
 	int32		_foodEaten	{0};
 	FIntPoint	_foodPos;
 
-	ATilemap*	_tilemap	{nullptr}; // hold reference to tilemap to allow for snake pawn to easily access it
-	ASnakePawn* _snakePawn	{nullptr};
+	UPlayerHUDWidget*	_playerHUDWidget	{nullptr};
+	UGameOverWidget*	_gameOverWidget		{nullptr};
+
+	ATilemap*			_tilemap			{nullptr};
+	ASnakePawn*			_snakePawn			{nullptr};
 };

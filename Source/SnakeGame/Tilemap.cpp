@@ -23,6 +23,14 @@ Tile::Tile(TileType tileType, const FIntPoint& position, int32 index, int32 tile
 	_triangles.Add(1);
 	_triangles.Add(3);
 	_triangles.Add(2);
+
+	int32 typeIndex = (int32)_tileType;
+	const FColor& color = TileColor[typeIndex];
+
+	_color.Add(color);
+	_color.Add(color);
+	_color.Add(color);
+	_color.Add(color);
 }
 
 bool Tile::operator==(const TileType& rhs) const
@@ -44,38 +52,32 @@ void Tile::SetType(TileType tileType)
 	_tileType = tileType;
 
 	int32 typeIndex = (int32)_tileType;
-	const FLinearColor& color = TileColor[typeIndex];
+	const FColor& color = TileColor[typeIndex];
 
-	if (_color.Num())
-	{
-		_color[0] = color;
-		_color[1] = color;
-		_color[2] = color;
-		_color[3] = color;
-	}
-	else
-	{
-		_color.Add(color);
-		_color.Add(color);
-		_color.Add(color);
-		_color.Add(color);
-	}
+	for (FColor& c : _color) // update the color
+		c = color;
 }
 
 void Tile::BuildMesh(UProceduralMeshComponent* const mesh, UMaterialInterface* const mtl)
 {
-	mesh->CreateMeshSection_LinearColor(_index, _vertices, _triangles, TArray<FVector>(), TArray<FVector2D>(), _color, TArray<FProcMeshTangent>(), false);
+	// Creating a separate mesh for each tile is usually not a good idea since 
+	// it could affect performance significantly if the grid was very large.
+	//
+	// But given the context, and in order to quickly and easily update the mesh 
+	// when a tile updated, I think this solution works well enough.
+
+	mesh->CreateMeshSection(_index, _vertices, _triangles, TArray<FVector>(), TArray<FVector2D>(), _color, TArray<FProcMeshTangent>(), false);
 	mesh->SetMaterial(_index, mtl);
 }
 
 void Tile::UpdateMesh(UProceduralMeshComponent* const mesh)
 {
-	mesh->UpdateMeshSection_LinearColor(_index, _vertices, TArray<FVector>(), TArray<FVector2D>(), _color, TArray<FProcMeshTangent>());
+	mesh->UpdateMeshSection(_index, _vertices, TArray<FVector>(), TArray<FVector2D>(), _color, TArray<FProcMeshTangent>());
 }
 
 // -- tilemap --
 
-ATilemap::ATilemap() : _tiles(std::make_unique<Tile[]>(_width * _height))
+ATilemap::ATilemap()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -85,6 +87,8 @@ ATilemap::ATilemap() : _tiles(std::make_unique<Tile[]>(_width * _height))
 
 void ATilemap::Initialize()
 {
+	_tiles = std::make_unique<Tile[]>(_width * _height);
+
 	for (int32 y = 0; y < _height; ++y)
 		for (int32 x = 0; x < _width; ++x)
 		{
@@ -95,28 +99,35 @@ void ATilemap::Initialize()
 		}
 }
 
-constexpr uint16 ATilemap::GetWidth() const noexcept
+constexpr int32 ATilemap::GetWidth() const noexcept
 {
 	return _width;
 }
-constexpr uint16 ATilemap::GetHeight() const noexcept
+constexpr int32 ATilemap::GetHeight() const noexcept
 {
 	return _height;
+}
+constexpr int32 ATilemap::GetTileSize() const noexcept
+{
+	return _tileSize;
 }
 
 const Tile& ATilemap::GetTile(const int32 x, const int32 y) const
 {
 	return _tiles[IX(x, y)];
 }
-bool ATilemap::SetTile(const int32 x, const int32 y, const TileType tile_type)
+bool ATilemap::SetTile(const int32 x, const int32 y, const TileType tileType)
 {
 	if (!WithinMap(x, y))
 		return false;
 
 	Tile& tile = _tiles[IX(x, y)];
 
-	tile.SetType(tile_type);
-	tile.UpdateMesh(_mesh);
+	if (tile != tileType) // set new tile and update mesh for new color if new
+	{
+		tile.SetType(tileType);
+		tile.UpdateMesh(_mesh); 
+	}
 
 	return true;
 }
@@ -125,9 +136,9 @@ const Tile& ATilemap::GetTile(const FIntPoint& point) const
 {
 	return GetTile(point.X, point.Y);
 }
-bool ATilemap::SetTile(const FIntPoint& point, const TileType tile_type)
+bool ATilemap::SetTile(const FIntPoint& point, const TileType tileType)
 {
-	return SetTile(point.X, point.Y, tile_type);
+	return SetTile(point.X, point.Y, tileType);
 }
 
 bool ATilemap::WithinMap(const int32 x, const int32 y) const

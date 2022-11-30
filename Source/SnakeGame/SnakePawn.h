@@ -3,6 +3,7 @@
 #pragma once
 
 #include <Kismet/GameplayStatics.h>
+#include <Camera/CameraComponent.h>
 
 #include <vector>
 #include <cmath>
@@ -44,8 +45,8 @@ private:
 	void MoveUp();
 
 public:
-	UPROPERTY(EditAnywhere, meta = (ToolTip = "Speed at which the snake traverses tiles, e.g., speed of 1 means 1 tile per second"))
-	float		_tilesPerSecond	{1.0f};
+	UPROPERTY(EditAnywhere, meta = (ToolTip = "Speed at which the snake traverses tiles"))
+	float		_tilesPerSecond	{0.3f};
 
 	UPROPERTY(EditAnywhere, meta = (ToolTip = "Current length of the snake"))
 	int32		_length			{5};
@@ -55,12 +56,17 @@ public:
 
 	UPROPERTY(EditAnywhere, meta = (ToolTip = "Current direction the snake is heading"))
 	FIntPoint	_direction		{1, 0};
+
+	UPROPERTY(EditAnywhere, meta = (ToolTip = "How far away the camera is positioned from the tilemap"))
+	float		_cameraZPos		{1200.0f};
 	
 private:
-	float				_moveTimer {0.0f};
-	FIntPoint			_oldPos;	// old position to compare if new tile is reached
+	float				_moveTimer	{0.0f}; // timer until snake moves again
+	FIntPoint			_oldPos;			// old position to update tiles correctly
 
-	TArray<FIntPoint>	_body;		// body of the snake, used primarily to move outmost tail
+	TArray<FIntPoint>	_body;				// body of the snake, used to update tiles accordingly
+
+	UCameraComponent*	_camera		{nullptr};
 
 	ASnakeGameLogic*	_gameLogic	{nullptr};
 	ATilemap*			_tilemap	{nullptr};

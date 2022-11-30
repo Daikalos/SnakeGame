@@ -17,7 +17,6 @@ enum class TileType : uint8
 	Food		UMETA(DisplayName = "Food"),
 	SnakeBody	UMETA(DisplayName = "SnakeBody"),
 	SnakeHead	UMETA(DisplayName = "SnakeHead"),
-	SnakeTail	UMETA(DisplayName = "SnakeTail"),
 
 	Count // keep this at end
 };
@@ -28,13 +27,12 @@ class ATilemap;
 
 // match tiletype to specific color
 //
-static const FLinearColor TileColor[] =
+static const FColor TileColor[] =
 {
-	FLinearColor(0.5f, 1.0f, 0.5f), // Empty
-	FLinearColor(1.0f, 0.0f, 0.0f), // Food
-	FLinearColor(0.1f, 0.4f, 0.1f), // Body
-	FLinearColor(0.3f, 0.6f, 0.3f), // Head
-	FLinearColor(0.0f, 0.4f, 0.0f)  // Tail
+	FColor(10, 40, 10), // Empty
+	FColor(255, 0, 0),	// Food
+	FColor(0, 255, 0),	// Body
+	FColor(0, 75, 0),	// Head
 };
 
 class Tile
@@ -58,14 +56,14 @@ public:
 	void UpdateMesh(UProceduralMeshComponent* const mesh);
 
 private:
-	TileType				_tileType	{TileType::Empty};
-	FIntPoint				_position;
-	int32					_index		{0};
-	int32					_tileSize	{0};
+	TileType			_tileType	{TileType::Empty};
+	FIntPoint			_position;
+	int32				_index		{0};
+	int32				_tileSize	{0};
 
-	TArray<FVector>			_vertices;
-	TArray<int32>			_triangles;
-	TArray<FLinearColor>	_color;
+	TArray<FVector>		_vertices;
+	TArray<int32>		_triangles;
+	TArray<FColor>		_color;
 
 	friend ATilemap;
 };
@@ -86,14 +84,15 @@ public:
 	void Initialize();
 
 public:
-	[[nodiscard]] constexpr uint16 GetWidth() const noexcept;
-	[[nodiscard]] constexpr uint16 GetHeight() const noexcept;
+	[[nodiscard]] constexpr int32 GetWidth() const noexcept;
+	[[nodiscard]] constexpr int32 GetHeight() const noexcept;
+	[[nodiscard]] constexpr int32 GetTileSize() const noexcept;
 
 	[[nodiscard]] const Tile& GetTile(const int32 x, const int32 y) const;
-	bool SetTile(const int32 x, const int32 y, const TileType tile_type);
+	bool SetTile(const int32 x, const int32 y, const TileType tileType);
 
 	[[nodiscard]] const Tile& GetTile(const FIntPoint& point) const;
-	bool SetTile(const FIntPoint& point, const TileType tile_type);
+	bool SetTile(const FIntPoint& point, const TileType tileType);
 
 	// returns true if the given coordinates is within the borders of the tilemap
 	//
@@ -107,13 +106,13 @@ private:
 
 public:
 	UPROPERTY(EditAnywhere)
-	int32	_width		{16};	// number of tiles in width
+	int32	_width		{30};	// number of tiles in width
 
 	UPROPERTY(EditAnywhere)
-	int32	_height		{10};	// number of tiles in height
+	int32	_height		{15};	// number of tiles in height
 
 	UPROPERTY(EditAnywhere)
-	int32	_tileSize	{128};	// size of each tile in the grid
+	int32	_tileSize	{64};	// size of each tile in the grid
 
 	UPROPERTY(EditAnywhere)
 	UMaterialInterface* _material {nullptr};
