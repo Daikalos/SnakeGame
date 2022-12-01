@@ -84,9 +84,9 @@ public:
 	void Initialize();
 
 public:
-	[[nodiscard]] constexpr int32 GetWidth() const noexcept;
-	[[nodiscard]] constexpr int32 GetHeight() const noexcept;
-	[[nodiscard]] constexpr int32 GetTileSize() const noexcept;
+	[[nodiscard]] const int32& GetWidth() const noexcept;
+	[[nodiscard]] const int32& GetHeight() const noexcept;
+	[[nodiscard]] const int32& GetTileSize() const noexcept;
 
 	[[nodiscard]] const Tile& GetTile(const int32 x, const int32 y) const;
 	bool SetTile(const int32 x, const int32 y, const TileType tileType);

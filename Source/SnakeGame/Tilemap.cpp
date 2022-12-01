@@ -99,15 +99,15 @@ void ATilemap::Initialize()
 		}
 }
 
-constexpr int32 ATilemap::GetWidth() const noexcept
+const int32& ATilemap::GetWidth() const noexcept
 {
 	return _width;
 }
-constexpr int32 ATilemap::GetHeight() const noexcept
+const int32& ATilemap::GetHeight() const noexcept
 {
 	return _height;
 }
-constexpr int32 ATilemap::GetTileSize() const noexcept
+const int32& ATilemap::GetTileSize() const noexcept
 {
 	return _tileSize;
 }

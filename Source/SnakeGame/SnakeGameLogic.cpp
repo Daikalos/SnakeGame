@@ -81,9 +81,7 @@ FIntPoint ASnakeGameLogic::GetNewApplePos() const
 		x = rand() % _tilemap->GetWidth();
 		y = rand() % _tilemap->GetHeight();
 
-		--deathSpiral;
-
-	} while (_tilemap->GetTile(x, y) != TileType::Empty && deathSpiral >= 0);
+	} while (_tilemap->GetTile(x, y) != TileType::Empty && --deathSpiral >= 0);
 
 	if (deathSpiral < 0)
 	{
