@@ -24,13 +24,11 @@ private:
 	void BeginPlay() override;
 
 public:
-	int32 GetFoodEaten() const noexcept;
 	void AddFoodEaten();
-
 	bool IsGameOver();
 
 private:
-	FIntPoint GetNewFoodPoint() const;
+	FIntPoint GetNewApplePos() const;
 
 public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
@@ -40,8 +38,8 @@ public:
 	TSubclassOf<UGameOverWidget> GameOverWidget = nullptr;
 
 private:
-	int32		_foodEaten	{0};
-	FIntPoint	_foodPos;
+	int32		_applesEaten {0};
+	FIntPoint	_applePos;
 
 	UPlayerHUDWidget*	_playerHUDWidget	{nullptr};
 	UGameOverWidget*	_gameOverWidget		{nullptr};

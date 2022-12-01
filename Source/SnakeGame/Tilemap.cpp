@@ -90,7 +90,7 @@ void ATilemap::Initialize()
 	_tiles = std::make_unique<Tile[]>(_width * _height);
 
 	for (int32 y = 0; y < _height; ++y)
-		for (int32 x = 0; x < _width; ++x)
+		for (int32 x = 0; x < _width; ++x) // create the grid
 		{
 			int32 i = IX(x, y);
 

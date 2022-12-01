@@ -105,20 +105,19 @@ private:
 	[[nodiscard]] constexpr int32 IX(const int32 x, const int32 y) const noexcept;
 
 public:
-	UPROPERTY(EditAnywhere)
-	int32	_width		{30};	// number of tiles in width
+	UPROPERTY(EditAnywhere, meta = (ToolTip = "Mumber of tiles in width"))
+	int32	_width		{30};
 
-	UPROPERTY(EditAnywhere)
-	int32	_height		{15};	// number of tiles in height
+	UPROPERTY(EditAnywhere, meta = (ToolTip = "Mumber of tiles in height"))
+	int32	_height		{15};
 
-	UPROPERTY(EditAnywhere)
-	int32	_tileSize	{64};	// size of each tile in the grid
+	UPROPERTY(EditAnywhere, meta = (ToolTip = "Size of each tile in the grid"))
+	int32	_tileSize	{64};
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, meta = (ToolTip = "Vertex color material"))
 	UMaterialInterface* _material {nullptr};
 
 private:
-	TileArrayPtr _tiles;
-
+	TileArrayPtr				_tiles;
 	UProceduralMeshComponent*	_mesh		{nullptr}; // mesh of the grid
 };

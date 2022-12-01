@@ -46,7 +46,7 @@ private:
 
 public:
 	UPROPERTY(EditAnywhere, meta = (ToolTip = "Speed at which the snake traverses tiles"))
-	float		_tilesPerSecond	{0.3f};
+	float		_tilesPerSecond	{6.0f};
 
 	UPROPERTY(EditAnywhere, meta = (ToolTip = "Current length of the snake"))
 	int32		_length			{5};
@@ -70,6 +70,4 @@ private:
 
 	ASnakeGameLogic*	_gameLogic	{nullptr};
 	ATilemap*			_tilemap	{nullptr};
-
-	friend class ASnakeGameLogic;
 };

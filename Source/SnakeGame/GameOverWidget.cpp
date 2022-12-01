@@ -23,7 +23,7 @@ void UGameOverWidget::SetResult(const int32 result)
 
 void UGameOverWidget::RestartGame()
 {
-	UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
+	UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false); // just reloads the level
 }
 void UGameOverWidget::QuitGame()
 {

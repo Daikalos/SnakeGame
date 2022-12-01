@@ -30,10 +30,11 @@ void ASnakePawn::Initialize(ASnakeGameLogic* gameLogic, ATilemap* tilemap)
 	_gameLogic = gameLogic;
 	_tilemap = tilemap;
 
-	_moveTimer = _tilesPerSecond;
-	_tilesPerSecond /= 1.0f;
+	_tilesPerSecond = 1.0f / _tilesPerSecond;
+	_moveTimer = _tilesPerSecond + 0.2f; // +0.2 for small delay when initially starting
 
-	_camera->SetWorldRotation(FQuat::MakeFromEuler({ 0.0f, 270.0f, -90.0f })); // set rotation and position of camera
+	_camera->ProjectionMode == ECameraProjectionMode::Orthographic;				// set orthographic for flat view
+	_camera->SetWorldRotation(FQuat::MakeFromEuler({ 0.0f, 270.0f, -90.0f }));	// set rotation and position of camera
 	_camera->SetWorldLocation(
 		{ 
 			_tilemap->GetWidth() * _tilemap->GetTileSize() / 2.0f, 
@@ -42,7 +43,7 @@ void ASnakePawn::Initialize(ASnakeGameLogic* gameLogic, ATilemap* tilemap)
 		});
 
 	_body.Reserve(_length + 1); // +1 for head
-	_body.Push(_position); // add head
+	_body.Push(_position);		// add head
 
 	_tilemap->SetTile(_position, TileType::SnakeHead);
 
@@ -62,13 +63,13 @@ void ASnakePawn::Tick(float DeltaTime)
 
 	_moveTimer -= DeltaTime;
 
-	if (_moveTimer <= 0)
+	if (_moveTimer <= 0) // we move when timer hits zero or below
 	{
+		_oldPos = _position;
 		_position += _direction;
 
 		Update();
 
-		_oldPos = _position;
 		_moveTimer = _tilesPerSecond;
 	}
 }
@@ -89,7 +90,7 @@ void ASnakePawn::Update()
 	if (_gameLogic->IsGameOver())
 		return;
 
-	if (_tilemap->GetTile(_position) == TileType::Food)
+	if (_tilemap->GetTile(_position) == TileType::Food) // if we have eaten food we do not need to set tail as empty
 	{
 		_gameLogic->AddFoodEaten();
 
@@ -104,7 +105,7 @@ void ASnakePawn::Update()
 	_tilemap->SetTile(_position, TileType::SnakeHead);
 	_tilemap->SetTile(_oldPos, TileType::SnakeBody);
 
-	for (int32 i = _body.Num() - 1; i > 0; --i) // update body
+	for (int32 i = _body.Num() - 1; i > 0; --i) // update body positions
 		_body[i] = _body[i - 1];
 
 	_body[0] = _position;
@@ -114,24 +115,38 @@ void ASnakePawn::Update()
 
 void ASnakePawn::MoveLeft()
 {
-	// TODO: FIX
+	FIntPoint newDirection = { -1, 0 };
 
-	if (_direction.X != 1) // cannot move in on itself
-		_direction = { -1, 0 };
+	if (_position + newDirection == _oldPos) // cannot move in on itself
+		return;
+
+	_direction = newDirection;
 }
 void ASnakePawn::MoveRight()
 {
-	if (_direction.X != -1)
-		_direction = { 1, 0 };
+	FIntPoint newDirection = { 1, 0 };
+
+	if (_position + newDirection == _oldPos)
+		return;
+
+	_direction = newDirection;
 }
 void ASnakePawn::MoveDown()
 {
-	if (_direction.Y != -1)
-		_direction = { 0, 1 };
+	FIntPoint newDirection = { 0, 1 };
+
+	if (_position + newDirection == _oldPos)
+		return;
+
+	_direction = newDirection;
 }
 void ASnakePawn::MoveUp()
 {
-	if (_direction.Y != 1)
-		_direction = { 0, -1 };
+	FIntPoint newDirection = { 0, -1 };
+
+	if (_position + newDirection == _oldPos)
+		return;
+
+	_direction = newDirection;
 }
 

@@ -16,32 +16,27 @@ void ASnakeGameLogic::BeginPlay()
 	_tilemap = static_cast<ATilemap*>(UGameplayStatics::GetActorOfClass(GetWorld(), ATilemap::StaticClass())); // find tilemap
 	_snakePawn = static_cast<ASnakePawn*>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
 
-	_tilemap->Initialize(); // control order of calls
+	_tilemap->Initialize(); // control order of initialization
 	_snakePawn->Initialize(this, _tilemap);
 
-	_foodPos = GetNewFoodPoint();
-	_tilemap->SetTile(_foodPos, TileType::Food);
+	_applePos = GetNewApplePos(); // create the apple
+	_tilemap->SetTile(_applePos, TileType::Food);
 
 	auto controller = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
-	_playerHUDWidget = CreateWidget<UPlayerHUDWidget>(controller, PlayerHUDWidget);
+	_playerHUDWidget = CreateWidget<UPlayerHUDWidget>(controller, PlayerHUDWidget); // create the HUD
 	_playerHUDWidget->AddToViewport(9999);
 
 	controller->SetInputMode(FInputModeGameOnly());
 	controller->SetShowMouseCursor(false);
 }
 
-int32 ASnakeGameLogic::GetFoodEaten() const noexcept
-{
-	return _foodEaten;
-}
-
 void ASnakeGameLogic::AddFoodEaten()
 {
-	++_foodEaten;
+	++_applesEaten;
 
-	_playerHUDWidget->SetApples(_foodEaten);
-	_tilemap->SetTile(GetNewFoodPoint(), TileType::Food);
+	_playerHUDWidget->SetApples(_applesEaten);
+	_tilemap->SetTile(GetNewApplePos(), TileType::Food);
 }
 
 bool ASnakeGameLogic::IsGameOver()
@@ -50,9 +45,9 @@ bool ASnakeGameLogic::IsGameOver()
 
 	const bool gameOver = !_tilemap->WithinMap(_snakePawn->GetPosition()) ||
 		_tilemap->GetTile(_snakePawn->GetPosition()) == TileType::SnakeBody ||
-		_snakePawn->BodySize() == _tilemap->GetWidth() * _tilemap->GetHeight();
+		_snakePawn->BodySize() >= _tilemap->GetWidth() * _tilemap->GetHeight();
 
-	if (gameOver)
+	if (gameOver) // if it is game over, create the widget and pause the game
 	{
 		_playerHUDWidget->RemoveFromParent();
 
@@ -61,7 +56,7 @@ bool ASnakeGameLogic::IsGameOver()
 		_gameOverWidget = CreateWidget<UGameOverWidget>(controller, GameOverWidget);
 		_gameOverWidget->AddToViewport(9999);
 
-		_gameOverWidget->SetResult(_foodEaten);
+		_gameOverWidget->SetResult(_applesEaten); // set the result
 
 		controller->SetShowMouseCursor(true);
 		controller->SetInputMode(FInputModeGameAndUI());
@@ -72,14 +67,14 @@ bool ASnakeGameLogic::IsGameOver()
 	return gameOver;
 }
 
-FIntPoint ASnakeGameLogic::GetNewFoodPoint() const
+FIntPoint ASnakeGameLogic::GetNewApplePos() const
 {
 	// This works well enough, but as the snake grows and there are less tiles
 	// available, this leads to decrease in performance as it attempts to 
 	// find an available tile.
 
 	int32 x{0}, y{0};
-	int32 deathSpiral = 4096; // prevent infinite loop
+	int32 deathSpiral = 8192; // prevent infinite loop
 
 	do
 	{
