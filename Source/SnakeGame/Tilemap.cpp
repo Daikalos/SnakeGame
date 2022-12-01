@@ -8,10 +8,8 @@
 // -- tile --
 
 Tile::Tile(TileType tileType, const FIntPoint& position, int32 index, int32 tileSize)
-	: _tileType(), _position(position), _index(index), _tileSize(tileSize)
+	: _tileType(tileType), _position(position), _index(index), _tileSize(tileSize)
 {
-	SetType(tileType);
-
 	_vertices.Add(FVector(	 position.X * tileSize,			 position.Y * tileSize,			0));
 	_vertices.Add(FVector(	 position.X * tileSize,			(position.Y + 1) * tileSize,	0));
 	_vertices.Add(FVector(	(position.X + 1) * tileSize,	 position.Y * tileSize,			0));
